@@ -33,6 +33,8 @@ public class GameButton extends JButton {
         setForeground(Color.WHITE);
         setFocusable(false);
 
+        setContentAreaFilled(false);
+
         setSize(getPreferredSizeByType());
 
         addMouseListener(new MouseListener() {
@@ -75,19 +77,22 @@ public class GameButton extends JButton {
         if (isClicked) {
             g2d.setColor(loginLightColor);
         }
-        g2d.fillRect(0, 0, getWidth(), getHeight());
+        // Background
+        g2d.fillRect(1, 1, getWidth() - 2, getHeight() - 2);
 
         /* Draw border */
         // Border horizontal lines
-        for(int i = 0; i < Math.ceil((double) (getWidth() - border0.getIconWidth() * 2) / border2.getIconWidth()); i++ ){
+        for (int i = 0; i < Math.ceil((double) (getWidth() - border0.getIconWidth() * 2) / border2.getIconWidth()); i++) {
             g2d.drawImage(border2.getImage(), i * border2.getIconWidth() + border0.getIconWidth(), 1, border2.getIconWidth(), border2.getIconHeight(), null);
             g2d.drawImage(border2.getImage(), i * border2.getIconWidth() + border0.getIconWidth(), getHeight() - border2.getIconHeight(), border2.getIconWidth(), border2.getIconHeight(), null);
         }
         // Border vertical lines
-        for(int i = 0; i < Math.ceil((double) (getHeight() - border0.getIconHeight() * 2) / border2.getIconWidth()); i++ ){
-            g2d.drawImage(border3.getImage(), 0, i * border3.getIconHeight() + border0.getIconHeight(), border3.getIconWidth(), (i+1) * border3.getIconHeight() + border0.getIconHeight(), border3.getIconWidth(), 0, 0, border3.getIconHeight(), null);
-            g2d.drawImage(border3.getImage(), getWidth() - border3.getIconWidth(), i * border3.getIconHeight() + border0.getIconHeight(), getWidth(), (i+1) * border3.getIconHeight() + border0.getIconHeight(), 0, 0, border3.getIconWidth(), border3.getIconHeight(), null);
+        for (int i = 0; i < Math.ceil((double) (getHeight() - border0.getIconHeight() * 2) / border2.getIconWidth()); i++) {
+            g2d.drawImage(border3.getImage(), 1, i * border3.getIconHeight() + border0.getIconHeight(), border3.getIconWidth() + 1, (i + 1) * border3.getIconHeight() + border0.getIconHeight(), border3.getIconWidth(), 0, 0, border3.getIconHeight(), null);
+            g2d.drawImage(border3.getImage(), getWidth() - border3.getIconWidth() - 1, i * border3.getIconHeight() + border0.getIconHeight(), getWidth() - 1, (i + 1) * border3.getIconHeight() + border0.getIconHeight(), 0, 0, border3.getIconWidth(), border3.getIconHeight(), null);
         }
+        g2d.drawImage(border1.getImage(), (getWidth() - border1.getIconWidth()) / 2, 0, border1.getIconWidth(), border1.getIconHeight(), null);
+
         // Top left
         g2d.drawImage(border0.getImage(), 0, 0, border0.getIconWidth(), border0.getIconHeight(), null);
         // Top right

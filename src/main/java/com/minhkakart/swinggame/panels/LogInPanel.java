@@ -1,7 +1,6 @@
 package com.minhkakart.swinggame.panels;
 
 import com.minhkakart.swinggame.MainApplication;
-import com.minhkakart.swinggame.enums.BackgroundPlace;
 import com.minhkakart.swinggame.enums.ButtonType;
 import com.minhkakart.swinggame.supports.CenterBox;
 import com.minhkakart.swinggame.ui.GameButton;
@@ -28,8 +27,8 @@ public class LogInPanel extends JPanel {
         setLayout(new CenterBox(10));
 
         newGameButton.setBounds(0, 0, newGameButton.getWidth(), newGameButton.getHeight());
-        add(newGameButton);
-        add(continueButton);
+//        add(newGameButton);
+//        add(continueButton);
         add(exitButton);
         add(changeBackground);
 

@@ -2,6 +2,7 @@ package com.minhkakart.swinggame;
 
 import com.minhkakart.swinggame.panels.BackgroundPanel;
 import com.minhkakart.swinggame.panels.LogInPanel;
+import com.minhkakart.swinggame.panels.MapPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,8 +38,13 @@ public class MainApplication extends JFrame {
         LogInPanel logInPanel = new LogInPanel();
         logInPanel.setBounds( -1, -1, WIDTH, HEIGHT);
 
+        MapPanel mapPanel = new MapPanel();
+        mapPanel.setBounds(1, 1, WIDTH, HEIGHT);
+
         layeredPane.add(backgroundPanel, JLayeredPane.DEFAULT_LAYER);
-        layeredPane.add(logInPanel, new Integer(1));
+//        layeredPane.add(logInPanel, new Integer(1));
+        layeredPane.add(mapPanel, new Integer(2));
+
 
         add(layeredPane);
 

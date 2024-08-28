@@ -4,15 +4,22 @@ import com.minhkakart.swinggame.entities.Background;
 import com.minhkakart.swinggame.enums.BackgroundPlace;
 
 import javax.swing.*;
-import java.awt.*;
+import javax.swing.Timer;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class BackgroundPanel extends JPanel {
     private final Background background;
 
     public BackgroundPanel() {
         setOpaque(true);
-        setBackground(new Color(32, 195, 245));
-        background = new Background(BackgroundPlace.VILLAGE);
+
+        BackgroundPlace[] places = BackgroundPlace.values();
+        Random random = new Random();
+        int index = random.nextInt(places.length);
+
+        background = new Background(places[index]);
+        setBackground(background.getBackgroundPlace().getColor());
 
         new Timer(1000 / 50, e -> repaint()).start();
 
@@ -20,12 +27,15 @@ public class BackgroundPanel extends JPanel {
     }
 
     public void changeBackGround(){
-        BackgroundPlace place = background.getBackgroundPlace();
-        if (place == BackgroundPlace.VILLAGE) {
-            background.changeBackground(BackgroundPlace.SNOW);
-        } else {
-            background.changeBackground(BackgroundPlace.VILLAGE);
-        }
+        BackgroundPlace[] places = BackgroundPlace.values();
+        List<BackgroundPlace> backgroundPlaces = Arrays.stream(places).collect(Collectors.toList());
+        backgroundPlaces.remove(background.getBackgroundPlace());
+
+        Random random = new Random();
+        int index = random.nextInt(backgroundPlaces.size());
+
+        background.changeBackground(backgroundPlaces.get(index));
+        setBackground(background.getBackgroundPlace().getColor());
     }
 
     @Override
