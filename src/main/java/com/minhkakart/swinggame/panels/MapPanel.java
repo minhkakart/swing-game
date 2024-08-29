@@ -14,12 +14,16 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Optional;
 
-public class MapPanel extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener {
+public class MapPanel extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener {
 
-    private int[][] mapAssets;
+    private int[][][] mapAssets;
     private Point prevPoint = new Point();
     private final Point translatePoint = new Point(0, 0);
     private double scale = 1.0;
+
+    private int nLayer;
+    private int row;
+    private int col;
 
     public MapPanel() {
         setOpaque(true);
@@ -29,27 +33,42 @@ public class MapPanel extends JPanel implements MouseListener, MouseMotionListen
         addMouseListener(this);
         addMouseMotionListener(this);
         addMouseWheelListener(this);
+        addKeyListener(this);
 
-        loadMapAsset(MapName.TONE);
+    }
+
+    public MapPanel(MapName mapName) {
+        this();
+        loadMapAsset(mapName);
+    }
+
+    public synchronized void translate(int x, int y) {
+        translatePoint.x += x;
+        translatePoint.y += y;
     }
 
     public void loadMapAsset(MapName mapName) {
         InputStream inputStream = null;
         BufferedReader bufferedReader = null;
-
+        String line;
         try {
             inputStream = Files.newInputStream(Paths.get(ResourceManager.getMapDataPath(mapName.getMapName())));
             bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            String line = bufferedReader.readLine();
-            int row = Integer.parseInt(line);
             line = bufferedReader.readLine();
-            int col = Integer.parseInt(line);
-            mapAssets = new int[row][col];
-            for (int i = 0; i < row; i++) {
-                String[] values = StringFormatter.removeUnnecessarySpace(bufferedReader.readLine()).split(" ");
-                for (int j = 0; j < values.length; j++) {
-                    int value = Integer.parseInt(values[j]);
-                    mapAssets[i][j] = value;
+            nLayer = Integer.parseInt(line);
+            line = bufferedReader.readLine();
+            row = Integer.parseInt(line);
+            line = bufferedReader.readLine();
+            col = Integer.parseInt(line);
+            mapAssets = new int[row][col][nLayer];
+            for (int layer = 0; layer < nLayer; layer++) {
+                bufferedReader.readLine();
+                for (int i = 0; i < row; i++) {
+                    String[] values = StringFormatter.removeUnnecessarySpace(bufferedReader.readLine()).split(" ");
+                    for (int j = 0; j < values.length; j++) {
+                        int value = Integer.parseInt(values[j]);
+                        mapAssets[i][j][layer] = value;
+                    }
                 }
             }
 /*
@@ -80,29 +99,33 @@ public class MapPanel extends JPanel implements MouseListener, MouseMotionListen
 
     }
 
-
     @Override
     public void paint(Graphics g) {
         super.paint(g);
+        if (mapAssets == null) {
+            return;
+        }
         Graphics2D g2d = (Graphics2D) g;
         g2d.scale(scale, scale);
         g2d.translate(translatePoint.x, translatePoint.y);
-        for (int i = 0; i < mapAssets.length; i++) {
-            for (int j = 0; j < mapAssets[i].length; j++) {
-                int id = mapAssets[i][j];
-                if (id == 0) {
-                    continue;
-                }
+        for (int layer = 0; layer < nLayer; layer++) {
+            for (int currentRow = 0; currentRow < row; currentRow++) {
+                for (int currentCol = 0; currentCol < col; currentCol++) {
+                    int id = mapAssets[currentRow][currentCol][layer];
+                    if (id == 0) {
+                        continue;
+                    }
 
-                Optional<MapAssetPart> mapAssetPart = ResourceManager.getMapAssetPart(id);
-                if (mapAssetPart.isPresent()) {
-                    MapAssetPart part = mapAssetPart.get();
-                    Image image = part.getPartImage().getImage();
-                    Point sourceStartPoint = part.getStartPoint();
-                    Point sourceEndPoint = part.getEndPoints();
-                    g2d.drawImage(image, j * MapAssetPart.PART_WIDTH, i * MapAssetPart.PART_HEIGHT, (j + 1) * MapAssetPart.PART_WIDTH, (i + 1) * MapAssetPart.PART_HEIGHT, sourceStartPoint.x, sourceStartPoint.y, sourceEndPoint.x, sourceEndPoint.y, null);
-                }
+                    Optional<MapAssetPart> mapAssetPart = ResourceManager.getMapAssetPart(id);
+                    if (mapAssetPart.isPresent()) {
+                        MapAssetPart part = mapAssetPart.get();
+                        Image image = part.getPartImage().getImage();
+                        Point sourceStartPoint = part.getStartPoint();
+                        Point sourceEndPoint = part.getEndPoints();
+                        g2d.drawImage(image, currentCol * MapAssetPart.PART_WIDTH, currentRow * MapAssetPart.PART_HEIGHT, (currentCol + 1) * MapAssetPart.PART_WIDTH, (currentRow + 1) * MapAssetPart.PART_HEIGHT, sourceStartPoint.x, sourceStartPoint.y, sourceEndPoint.x, sourceEndPoint.y, this);
+                    }
 
+                }
             }
         }
     }
@@ -137,7 +160,6 @@ public class MapPanel extends JPanel implements MouseListener, MouseMotionListen
         translatePoint.x += currentPoint.x - prevPoint.x;
         translatePoint.y += currentPoint.y - prevPoint.y;
         prevPoint = currentPoint;
-        repaint();
     }
 
     @Override
@@ -153,6 +175,34 @@ public class MapPanel extends JPanel implements MouseListener, MouseMotionListen
         } else {
             scale -= 0.1;
         }
-        repaint();
     }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        switch (e.getKeyCode()) {
+            case KeyEvent.VK_UP:
+                translatePoint.y += 4;
+                break;
+            case KeyEvent.VK_DOWN:
+                translatePoint.y -= 4;
+                break;
+            case KeyEvent.VK_LEFT:
+                translatePoint.x += 4;
+                break;
+            case KeyEvent.VK_RIGHT:
+                translatePoint.x -= 4;
+                break;
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
+    }
+
 }

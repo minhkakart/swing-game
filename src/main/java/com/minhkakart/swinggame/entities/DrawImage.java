@@ -46,4 +46,9 @@ public class DrawImage implements Drawable {
     public void draw(Graphics2D g) {
         g.drawImage(image.getImage(), position.x, position.y, null);
     }
+
+    @Override
+    public void draw(Graphics2D g, Point position) {
+
+    }
 }
