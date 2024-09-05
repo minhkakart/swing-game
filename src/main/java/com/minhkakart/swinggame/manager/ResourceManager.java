@@ -17,8 +17,12 @@ public class ResourceManager {
         return BACKGROUND_PATH + background;
     }
 
-    public static String getMapDataPath(String map) {
-        return "src/main/resources/map-data/" + map;
+    public static String getMapAssetDataPath(String map) {
+        return "src/main/resources/map-data/asset/" + map;
+    }
+
+    public static String getMapColliderDataPath(String map) {
+        return "src/main/resources/map-data/collider/" + map;
     }
 
     public static Optional<MapAssetPart> getMapAssetPart(int id) {

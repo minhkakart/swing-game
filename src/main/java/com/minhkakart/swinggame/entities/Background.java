@@ -170,7 +170,6 @@ public class Background {
 
             case VILLAGE:
             default:
-
                 bgLv4 = new DrawImage(bgLv4Image, new Point(0, MainApplication.HEIGHT - bgLv4Image.getIconHeight()));
                 bgLv3 = new DrawImage(bgLv3Image, new Point(0, bgLv4.getPosition().y - bgLv3Image.getIconHeight() + 10));
                 bgLv2 = new DrawImage(bgLv2Image, new Point(0, bgLv3.getPosition().y - bgLv2Image.getIconHeight() + 6));

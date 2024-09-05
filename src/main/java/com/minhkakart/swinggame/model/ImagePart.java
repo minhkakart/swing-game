@@ -1,5 +1,6 @@
 package com.minhkakart.swinggame.model;
 
+import com.minhkakart.swinggame.entities.Player;
 import com.minhkakart.swinggame.enums.PlayerPart;
 import com.minhkakart.swinggame.interfaces.Drawable;
 import com.minhkakart.swinggame.manager.ResourceManager;
@@ -39,24 +40,45 @@ public class ImagePart implements Drawable {
     }
 
     @Override
-    public void draw(Graphics2D g) {
+    public void draw(Graphics2D g2d) {
 
     }
 
     @Override
-    public void draw(Graphics2D g, Point position) {
-        Point offset = playerPart.getOffset();
+    public void draw(Graphics2D g2d, boolean isFlipped) {
+
+    }
+
+    @Override
+    public void draw(Graphics2D g2d, Point position) {
+
+
+    }
+
+    @Override
+    public void draw(Graphics2D g2d, Point position, boolean isFlipped) {
         int source = playerPart.getSource();
         Image image = getSourcedImage(source);
-        int dx1 = position.x + offset.x;
-        int dy1 = position.y + offset.y;
-        int dx2 = dx1 + size.width;
-        int dy2 = dy1 + size.height;
+        Point offset = playerPart.getOffset();
+
         int sx1 = startPoint.x;
         int sy1 = startPoint.y;
         int sx2 = sx1 + size.width;
         int sy2 = sy1 + size.height;
-        g.drawImage(image, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, null);
+
+        if (isFlipped) {
+            int dx1 = position.x + (Player.PLAYER_DRAW_AREA_WIDTH - offset.x);
+            int dy1 = position.y + offset.y;
+            int dx2 = dx1 - size.width;
+            int dy2 = dy1 + size.height;
+            g2d.drawImage(image, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, null);
+        } else {
+            int dx1 = position.x + offset.x;
+            int dy1 = position.y + offset.y;
+            int dx2 = dx1 + size.width;
+            int dy2 = dy1 + size.height;
+            g2d.drawImage(image, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, null);
+        }
 
     }
 

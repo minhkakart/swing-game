@@ -1,10 +1,13 @@
 package com.minhkakart.swinggame;
 
+import com.minhkakart.swinggame.enums.GameLayerDepth;
 import com.minhkakart.swinggame.enums.MapName;
-import com.minhkakart.swinggame.panels.*;
+import com.minhkakart.swinggame.model.GameCamera;
+import com.minhkakart.swinggame.ui.layer.BackgroundLayer;
+import com.minhkakart.swinggame.ui.layer.MapLayer;
+import com.minhkakart.swinggame.ui.layer.PlayerLayer;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -16,44 +19,50 @@ public class MainApplication extends JFrame {
     public MainApplication() {
         setTitle("Swing Game");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setResizable(false);
+        setResizable(true);
         setVisible(true);
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 super.windowClosing(e);
+                System.out.println("Exit");
                 System.exit(0);
             }
         });
 
+        GamePanel gamePanel = getGamePanel();
 
-        JLayeredPane layeredPane = new JLayeredPane();
-        layeredPane.setPreferredSize(new Dimension(WIDTH, HEIGHT));
-        layeredPane.setOpaque(true);
-        
-        BackgroundPanel backgroundPanel = new BackgroundPanel();
-        backgroundPanel.setBounds(0, 0, WIDTH, HEIGHT);
-
-        MapPanel mapPanel = new MapPanel(MapName.ICHIDAI);
-        mapPanel.setBounds(0, 1, WIDTH, HEIGHT);
-
-        PlayerPanel playerPanel = new PlayerPanel();
-        playerPanel.setBounds(1, 0, WIDTH, HEIGHT);
-
-        ControlPanel controlPanel = new ControlPanel();
-        controlPanel.setBounds(1, 1, WIDTH, HEIGHT);
-        controlPanel.addKeyListener(mapPanel);
-
-        layeredPane.add(backgroundPanel, JLayeredPane.DEFAULT_LAYER);
-        layeredPane.add(mapPanel, new Integer(1));
-        layeredPane.add(playerPanel, new Integer(2));
-        layeredPane.add(controlPanel, new Integer(3));
-
-        add(layeredPane);
+        add(gamePanel);
 
         pack();
         setLocationRelativeTo(null);
+        setAlwaysOnTop(true);
 
+    }
+
+    private static GamePanel getGamePanel() {
+        MapLayer mapLayer = new MapLayer(MapName.TONE, GameLayerDepth.MAP);
+        BackgroundLayer backgroundLayer = new BackgroundLayer(GameLayerDepth.BACKGROUND);
+        PlayerLayer playerLayer = new PlayerLayer(GameLayerDepth.PLAYER);
+        GameCamera camera = new GameCamera(playerLayer, mapLayer);
+
+        backgroundLayer.setBackGround(mapLayer.getMapName().getBackgroundPlace());
+
+        playerLayer.getPlayer().setCamera(camera);
+        mapLayer.setCamera(camera);
+
+        GamePanel gamePanel = new GamePanel();
+        gamePanel.setBounds(0, 0, WIDTH, HEIGHT);
+        gamePanel.setBackground(backgroundLayer.getBackground().getBackgroundPlace().getColor());
+
+        gamePanel.addGameLayer(backgroundLayer);
+        gamePanel.addGameLayer(mapLayer);
+        gamePanel.addGameLayer(playerLayer);
+
+        gamePanel.addGameInputListener(playerLayer.getInputListener());
+        gamePanel.addGameInputListener(mapLayer.getInputListener());
+
+        return gamePanel;
     }
 
     public static void main(String[] args) {

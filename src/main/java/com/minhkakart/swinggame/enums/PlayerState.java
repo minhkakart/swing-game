@@ -2,7 +2,7 @@ package com.minhkakart.swinggame.enums;
 
 public enum PlayerState {
     STANDING(1, 0),
-    RUNNING(5, 200),
+    RUNNING(5, 50),
     JUMPING(5, 200),
     FALLING(1, 0),
     BEING_HIT(1, 0),

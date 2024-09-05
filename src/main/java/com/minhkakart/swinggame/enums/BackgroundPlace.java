@@ -15,6 +15,7 @@ public enum BackgroundPlace {
     ICE_MOUNTAIN("ice-mountain", new Color(19, 156, 170), true, CloudImage.WHITE, new int[]{50, 190, 420}, new int[]{30, 110, 70}),
     SEA("sea", new Color(160, 216, 248), true, CloudImage.NONE, null, null),
     CAVE("cave", new Color(0, 0, 0), false, CloudImage.NONE, null, null),
+    DESERT("desert", new Color(41, 196, 246), true, CloudImage.NONE, null, null),
     COUNTRY("country", new Color(86, 171, 238), true, CloudImage.WHITE, new int[]{50, 190, 420}, new int[]{30, 110, 70});
 
     private final String place;
