@@ -1,9 +1,6 @@
 package com.minhkakart.swinggame.entities;
 
-import com.minhkakart.swinggame.enums.Direction;
-import com.minhkakart.swinggame.enums.MapCollider;
-import com.minhkakart.swinggame.enums.PlayerPart;
-import com.minhkakart.swinggame.enums.PlayerState;
+import com.minhkakart.swinggame.enums.*;
 import com.minhkakart.swinggame.interfaces.Drawable;
 import com.minhkakart.swinggame.model.GameCamera;
 import com.minhkakart.swinggame.model.ImagePart;
@@ -12,9 +9,10 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Stack;
 
+@SuppressWarnings({"CallToPrintStackTrace", "BusyWait", "unused"})
 public class Player implements Drawable {
-    public static final int PLAYER_DRAW_AREA_WIDTH = 22;
-    public static final int PLAYER_DRAW_AREA_HEIGHT = 35;
+    public static final int PLAYER_DRAW_AREA_WIDTH = 29;
+    public static final int PLAYER_DRAW_AREA_HEIGHT = 36;
 
     private final Point position;
     private final Point boundLeftCorner;
@@ -24,8 +22,13 @@ public class Player implements Drawable {
     private final ArrayList<ImagePart> bodies;
     private final ArrayList<ImagePart> legs;
 
+    private final ImagePart headFall = new ImagePart(PlayerPart.HEAD_FALL);
+    private final ImagePart bodyFall = new ImagePart(PlayerPart.BODY_FALL);
+    private final ImagePart legFall = new ImagePart(PlayerPart.LEG_FALL);
+
     private final Object moveLock = new Object();
     private final Object directionLock = new Object();
+    private final Object animationLock = new Object();
 
     private GameCamera camera;
 
@@ -34,6 +37,7 @@ public class Player implements Drawable {
 
     private int animationIndex = 0;
     private boolean isAnimating = false;
+    private JumpAnimationStage jumpAnimationStage = JumpAnimationStage.ONE;
 
     private final Stack<PlayerState> stateStack = new Stack<>();
 
@@ -78,16 +82,18 @@ public class Player implements Drawable {
         isAnimating = animating;
     }
 
-    private void playAnimation(){
-        if (isAnimating()){
+    private void playAnimation() {
+        if (isAnimating()) {
             return;
         }
         setAnimating(true);
         new Thread(() -> {
-            while (isAnimating()){
-                animationIndex++;
-                if (animationIndex == 6){
-                    animationIndex = 1;
+            while (isAnimating()) {
+                synchronized (animationLock) {
+                    animationIndex++;
+                    if (animationIndex == 6) {
+                        animationIndex = 1;
+                    }
                 }
                 try {
                     Thread.sleep(50);
@@ -95,12 +101,35 @@ public class Player implements Drawable {
                     e.printStackTrace();
                 }
             }
-            animationIndex = 0;
+            synchronized (animationLock) {
+                animationIndex = 0;
+            }
         }).start();
     }
 
-    public void stopAnimation(){
+    public void stopAnimation() {
         setAnimating(false);
+    }
+
+    private synchronized void setJumpAnimationStage(JumpAnimationStage jumpAnimationStage) {
+        this.jumpAnimationStage = jumpAnimationStage;
+    }
+
+    private void playJumpAnimation() {
+        new Thread(() -> {
+            for (int i = 0; i < JumpAnimationStage.values().length; i++) {
+                if (stateStack.peek() != PlayerState.JUMPING) {
+                    break;
+                }
+                try {
+                    Thread.sleep(jumpAnimationStage.getDuration());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                setJumpAnimationStage(JumpAnimationStage.values()[i]);
+            }
+            setJumpAnimationStage(JumpAnimationStage.ONE);
+        }).start();
     }
 
     public synchronized void moveLeft() {
@@ -122,20 +151,17 @@ public class Player implements Drawable {
         playAnimation();
 
         moveLeftThread = new Thread(() -> {
-            for (int i = 0; i < 100; i++) {
-                if (state == PlayerState.STANDING) {
-                    break;
-                }
+            while (state == PlayerState.RUNNING) {
                 int playerPosRow = position.y / 24;
                 int playerPosCol = position.x / 24;
-                int mapCollider = -1;
+                int mapCollider;
                 int moveX = -2;
                 int moveY = 0;
                 if (direction == Direction.LEFT) {
                     int colliderCol = Math.max(playerPosCol - 1, 0);
                     mapCollider = camera.getMapLayer().getMapColliders()[playerPosRow][colliderCol];
                     if (mapCollider == MapCollider.LEFT.getValue() || mapCollider == MapCollider.UP_LEFT.getValue() || mapCollider == MapCollider.DOWN_LEFT.getValue() || mapCollider == MapCollider.All.getValue()) {
-                        if (position.x + moveX < MapAssetPart.PART_WIDTH * playerPosCol + 8) {
+                        if (position.x + moveX < MapAssetPart.PART_WIDTH * playerPosCol + PLAYER_DRAW_AREA_WIDTH / 3) {
                             moveX = 0;
                         }
                     }
@@ -176,20 +202,17 @@ public class Player implements Drawable {
         playAnimation();
 
         moveRightThread = new Thread(() -> {
-            for (int i = 0; i < 100; i++) {
-                if (state == PlayerState.STANDING) {
-                    break;
-                }
+            while (state == PlayerState.RUNNING) {
                 int playerPosRow = position.y / 24;
                 int playerPosCol = position.x / 24;
-                int mapCollider = -1;
+                int mapCollider;
                 int moveX = 2;
                 int moveY = 0;
                 if (direction == Direction.RIGHT) {
                     int colliderCol = Math.min(playerPosCol + 1, camera.getMapLayer().getMapName().getMapCol() - 1);
                     mapCollider = camera.getMapLayer().getMapColliders()[playerPosRow][colliderCol];
                     if (mapCollider == MapCollider.RIGHT.getValue() || mapCollider == MapCollider.UP_RIGHT.getValue() || mapCollider == MapCollider.DOWN_RIGHT.getValue() || mapCollider == MapCollider.All.getValue()) {
-                        if (position.x + moveX > MapAssetPart.PART_WIDTH * (playerPosCol + 1) - 8) {
+                        if (position.x + moveX > MapAssetPart.PART_WIDTH * (playerPosCol + 1) - PLAYER_DRAW_AREA_WIDTH / 3) {
                             moveX = 0;
                         }
                     }
@@ -206,6 +229,7 @@ public class Player implements Drawable {
             }
             moveRightThread = null;
 
+
         });
         moveRightThread.start();
     }
@@ -217,18 +241,41 @@ public class Player implements Drawable {
         }
         stateStack.push(PlayerState.JUMPING);
 
+        playJumpAnimation();
+
+        // Total time for jump: 644ms
         new Thread(() -> {
-            int sleepTime = 8;
-            for (int i = 0; i < 38; i++) {
+            int sleepTime = 6;
+            for (int i = 0; i <= 38; i++) {
                 int moveX = 0;
                 int moveY = -2;
 
+                // Current position of player in the map grid
+                int playerPosRow = position.y / 24;
+                int playerPosCol = position.x / 24;
+
+
+                // Get the row of the map grid that the player's head is in
+                int colliderRow = Math.max(playerPosRow - 2, 0);
+                // Get the map collider in the map grid
+                int mapCollider = camera.getMapLayer().getMapColliders()[colliderRow][playerPosCol];
+
+                // Check if the player's head is colliding with the ceiling
+                if (mapCollider == MapCollider.UP.getValue() || mapCollider == MapCollider.UP_LEFT.getValue() || mapCollider == MapCollider.UP_RIGHT.getValue() || mapCollider == MapCollider.All.getValue()) {
+                    if (position.y + moveY - (Player.PLAYER_DRAW_AREA_HEIGHT - 6) < MapAssetPart.PART_HEIGHT * colliderRow + 24) {
+                        break;
+                    }
+                }
+
                 moving(moveX, moveY);
 
-                if (i >= 24) {
+                if (i >= 30) {
                     sleepTime = 20;
                 } else if (i >= 20) {
                     sleepTime = 12;
+                }
+                if (i == 38){
+                    sleepTime += 204;
                 }
                 try {
                     Thread.sleep(sleepTime);
@@ -264,6 +311,7 @@ public class Player implements Drawable {
 
         new Thread(() -> {
             int sleepTime = 30;
+            int count = 0;
             while (true) {
                 int moveX = 0;
                 int moveY = 2;
@@ -287,9 +335,17 @@ public class Player implements Drawable {
                     e.printStackTrace();
                 }
 
-                sleepTime -= 2;
-                if (sleepTime < 8) {
-                    sleepTime = 8;
+                count++;
+                if (count < 7) {
+                    sleepTime -= 1;
+                } else if (count < 18) {
+                    sleepTime -= 2;
+                } else {
+                    sleepTime -= 3;
+                }
+
+                if (sleepTime < 5) {
+                    sleepTime = 5;
                 }
             }
             stateStack.pop();
@@ -330,13 +386,30 @@ public class Player implements Drawable {
     @Override
     public void draw(Graphics2D g2d) {
         if (camera == null) return;
+        boolean isFlipped = direction == Direction.LEFT;
+
+        if (stateStack.peek() == PlayerState.FALLING) {
+            drawState(g2d, isFlipped, headFall, legFall, bodyFall);
+            return;
+        }
+
+        if (stateStack.peek() == PlayerState.JUMPING) {
+            for (PlayerPart part : jumpAnimationStage.getListPart()) {
+                new ImagePart(part).draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
+            }
+            return;
+        }
+
         ImagePart head = heads.get(animationIndex);
         ImagePart body = bodies.get(animationIndex);
         ImagePart leg = legs.get(animationIndex);
-        boolean isFlipped = direction == Direction.LEFT;
-        head.draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
-        leg.draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
-        body.draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
+        drawState(g2d, isFlipped, head, leg, body);
+    }
+
+    private void drawState(Graphics2D g2d, boolean isFlipped, ImagePart headFall, ImagePart legFall, ImagePart bodyFall) {
+        headFall.draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
+        legFall.draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
+        bodyFall.draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
     }
 
     @Override

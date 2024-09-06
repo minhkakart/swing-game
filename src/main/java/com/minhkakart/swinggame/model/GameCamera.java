@@ -12,7 +12,7 @@ public class GameCamera {
     /**
      * Camera's top-left position
      */
-    private final Point position = new Point(0, 0);
+    private final Point position = new Point(24, 24);
     private final MapLayer mapLayer;
 
     public GameCamera(PlayerLayer playerLayer, MapLayer mapLayer) {
@@ -23,17 +23,16 @@ public class GameCamera {
     public void setPosition(Point point) {
         int x = point.x - MainApplication.WIDTH / 2;
         int y = point.y - MainApplication.HEIGHT * 2 / 3;
-        if (x < 0) {
-            x = 0;
-        } else if (x > mapLayer.getMapName().getMapCol() * MapAssetPart.PART_WIDTH - MainApplication.WIDTH) {
-            x = mapLayer.getMapName().getMapCol() * MapAssetPart.PART_WIDTH - MainApplication.WIDTH;
+        if (x < 24) {
+            x = 24;
+        } else if (x > (mapLayer.getMapName().getMapCol() - 1) * MapAssetPart.PART_WIDTH - MainApplication.WIDTH) {
+            x = (mapLayer.getMapName().getMapCol() - 1) * MapAssetPart.PART_WIDTH - MainApplication.WIDTH;
         }
-        if (y < 0) {
-            y = 0;
+        if (y < 24) {
+            y = 24;
         } else if (y > mapLayer.getMapName().getMapRow() * MapAssetPart.PART_HEIGHT - MainApplication.HEIGHT) {
             y = mapLayer.getMapName().getMapRow() * MapAssetPart.PART_HEIGHT - MainApplication.HEIGHT;
         }
-
         position.setLocation(x, y);
     }
 

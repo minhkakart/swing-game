@@ -41,7 +41,7 @@ public class MainApplication extends JFrame {
     }
 
     private static GamePanel getGamePanel() {
-        MapLayer mapLayer = new MapLayer(MapName.TONE, GameLayerDepth.MAP);
+        MapLayer mapLayer = new MapLayer(MapName.ICHIDAI, GameLayerDepth.MAP);
         BackgroundLayer backgroundLayer = new BackgroundLayer(GameLayerDepth.BACKGROUND);
         PlayerLayer playerLayer = new PlayerLayer(GameLayerDepth.PLAYER);
         GameCamera camera = new GameCamera(playerLayer, mapLayer);

@@ -86,6 +86,7 @@ public class PlayerLayer extends GameLayer {
                     pressedKeys.add(KeyEvent.VK_UP);
                     break;
             }
+            playKeyEvent();
         }
 
         @Override

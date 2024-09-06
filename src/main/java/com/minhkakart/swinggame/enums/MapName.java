@@ -2,8 +2,8 @@ package com.minhkakart.swinggame.enums;
 
 @SuppressWarnings("SpellCheckingInspection")
 public enum MapName {
-    TONE("tone.txt", 19, 118, 2, BackgroundPlace.COUNTRY),
-    ICHIDAI("ichidai.txt", 85, 30, 2, BackgroundPlace.DESERT),;
+    TONE("tone.txt", 20, 120, 2, BackgroundPlace.COUNTRY),
+    ICHIDAI("ichidai.txt", 86, 30, 2, BackgroundPlace.DESERT),;
 
     private final String mapName;
     private final int mapRow;
