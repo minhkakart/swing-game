@@ -12,7 +12,7 @@ public class GameCamera {
     /**
      * Camera's top-left position
      */
-    private final Point position = new Point(24, 24);
+    private final Point position = new Point(0, 0);
     private final MapLayer mapLayer;
 
     public GameCamera(PlayerLayer playerLayer, MapLayer mapLayer) {
@@ -28,8 +28,8 @@ public class GameCamera {
         } else if (x > (mapLayer.getMapName().getMapCol() - 1) * MapAssetPart.PART_WIDTH - MainApplication.WIDTH) {
             x = (mapLayer.getMapName().getMapCol() - 1) * MapAssetPart.PART_WIDTH - MainApplication.WIDTH;
         }
-        if (y < 24) {
-            y = 24;
+        if (y < 96) {
+            y = 96;
         } else if (y > mapLayer.getMapName().getMapRow() * MapAssetPart.PART_HEIGHT - MainApplication.HEIGHT) {
             y = mapLayer.getMapName().getMapRow() * MapAssetPart.PART_HEIGHT - MainApplication.HEIGHT;
         }

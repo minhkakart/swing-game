@@ -39,6 +39,12 @@ public class ImagePart implements Drawable {
         this.size = playerPart.getSize();
     }
 
+    public ImagePart(Point startPoint, Dimension size, Point offset) {
+        this.startPoint = startPoint;
+        this.size = size;
+        this.offset = offset;
+    }
+
     @Override
     public void draw(Graphics2D g2d) {
 

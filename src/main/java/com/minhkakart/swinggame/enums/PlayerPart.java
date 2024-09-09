@@ -41,7 +41,11 @@ public enum PlayerPart {
     ROLL_1(new Point(0, 0), new Dimension(28, 28), new Point(0, 0), 0),
     ROLL_2(new Point(0, 29), new Dimension(29, 28), new Point(0, 0), 0),
     ROLL_3(new Point(0, 57), new Dimension(28, 29), new Point(0, 0), 0),
-    ROLL_4(new Point(0, 86), new Dimension(29, 28), new Point(0, 0), 0);
+    ROLL_4(new Point(0, 86), new Dimension(29, 28), new Point(0, 0), 0),
+
+    // Next map arrow
+
+    NEXT_MAP_ARROW(new Point(146, 233), new Dimension(13, 16), new Point(0, 0), 4);
 
 
     private final Point startPoint;

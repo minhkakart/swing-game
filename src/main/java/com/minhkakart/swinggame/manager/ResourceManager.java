@@ -25,6 +25,10 @@ public class ResourceManager {
         return "src/main/resources/map-data/collider/" + map;
     }
 
+    public static String getMapTeleportDataPath(String mapName) {
+        return "src/main/resources/map-data/teleport/" + mapName;
+    }
+
     public static Optional<MapAssetPart> getMapAssetPart(int id) {
         int partNumber = id % 1000;
         int assetNumber = (id - partNumber) / 1000;
@@ -65,4 +69,5 @@ public class ResourceManager {
         return Optional.of(new MapAssetPart(mapAsset, partNumber));
 
     }
+
 }

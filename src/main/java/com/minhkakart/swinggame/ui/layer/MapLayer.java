@@ -3,10 +3,9 @@ package com.minhkakart.swinggame.ui.layer;
 import com.minhkakart.swinggame.MainApplication;
 import com.minhkakart.swinggame.entities.MapAssetPart;
 import com.minhkakart.swinggame.enums.GameLayerDepth;
-import com.minhkakart.swinggame.enums.MapName;
+import com.minhkakart.swinggame.enums.MapData;
 import com.minhkakart.swinggame.manager.ResourceManager;
-import com.minhkakart.swinggame.model.GameCamera;
-import com.minhkakart.swinggame.model.GameInputListener;
+import com.minhkakart.swinggame.model.*;
 import com.minhkakart.swinggame.supports.StringFormatter;
 
 import java.awt.*;
@@ -26,17 +25,17 @@ public class MapLayer extends GameLayer {
     private final Point translatePoint = new Point(0, 0);
     private double scale = 1.0;
 
-    private final MapName mapName;
+    private MapData mapData;
     private int nLayer;
     private int row;
     private int col;
 
     private GameCamera camera;
 
-    public MapLayer(MapName mapName, GameLayerDepth depth) {
+    public MapLayer(MapData mapData, GameLayerDepth depth) {
         super(depth);
-        this.mapName = mapName;
-        loadMap(mapName);
+        this.mapData = mapData;
+        loadMap(mapData);
     }
 
     public GameCamera getCamera() {
@@ -51,8 +50,8 @@ public class MapLayer extends GameLayer {
         this.camera = camera;
     }
 
-    public MapName getMapName() {
-        return mapName;
+    public MapData getMapName() {
+        return mapData;
     }
 
     public synchronized void translate(int x, int y) {
@@ -61,20 +60,17 @@ public class MapLayer extends GameLayer {
     }
 
     @SuppressWarnings("CallToPrintStackTrace")
-    public void loadMap(MapName mapName) {
+    public synchronized void loadMap(MapData mapData) {
+        this.mapData = mapData;
         Thread loadAssetThread = new Thread(() -> {
             InputStream inputStream = null;
             BufferedReader bufferedReader = null;
-            String line;
             try {
-                inputStream = Files.newInputStream(Paths.get(ResourceManager.getMapAssetDataPath(mapName.getMapName())));
+                inputStream = Files.newInputStream(Paths.get(ResourceManager.getMapAssetDataPath(mapData.getMapName())));
                 bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                line = bufferedReader.readLine();
-                nLayer = Integer.parseInt(line);
-                line = bufferedReader.readLine();
-                row = Integer.parseInt(line);
-                line = bufferedReader.readLine();
-                col = Integer.parseInt(line);
+                nLayer = mapData.getMapLayerCount();
+                row = mapData.getMapRow();
+                col = mapData.getMapCol();
                 mapAssets = new int[row][col][nLayer];
                 for (int layer = 0; layer < nLayer; layer++) {
                     bufferedReader.readLine();
@@ -115,14 +111,11 @@ public class MapLayer extends GameLayer {
         Thread loadColliderThread = new Thread(() -> {
             InputStream inputStream = null;
             BufferedReader bufferedReader = null;
-            String line;
             try {
-                inputStream = Files.newInputStream(Paths.get(ResourceManager.getMapColliderDataPath(mapName.getMapName())));
+                inputStream = Files.newInputStream(Paths.get(ResourceManager.getMapColliderDataPath(mapData.getMapName())));
                 bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                line = bufferedReader.readLine();
-                row = Integer.parseInt(line);
-                line = bufferedReader.readLine();
-                col = Integer.parseInt(line);
+                row = mapData.getMapRow();
+                col = mapData.getMapCol();
                 mapColliders = new int[row][col];
                 for (int i = 0; i < row; i++) {
                     String[] values = StringFormatter.removeUnnecessarySpace(bufferedReader.readLine()).split(" ");
@@ -148,11 +141,66 @@ public class MapLayer extends GameLayer {
             }
         });
 
+        Thread loadTeleportThread = new Thread(() -> {
+            InputStream inputStream = null;
+            BufferedReader bufferedReader = null;
+            try {
+                MapTeleport[] mapTeleports = mapData.getMapTeleports();
+                int nTeleport = mapData.getTeleportCount();
+                inputStream = Files.newInputStream(Paths.get(ResourceManager.getMapTeleportDataPath(mapData.getMapName())));
+                bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                for (int i = 0; i < nTeleport; i++) {
+                    String[] values = StringFormatter.removeUnnecessarySpace(bufferedReader.readLine()).split(" ");
+//                    int x = Integer.parseInt(values[0]);
+//                    int y = Integer.parseInt(values[1]);
+//                    int directionValue = Integer.parseInt(values[2]);
+//                    Direction direction = Direction.values()[directionValue];
+//                    mapTeleports.add(new MapTeleport(new Point(x, y), direction));
+
+                    mapTeleports[i].setMapOwner(mapData);
+
+                    String destinationMapName = values[0];
+                    int teleportIndex = Integer.parseInt(values[1]);
+
+                    MapData destinationMap;
+                    switch (destinationMapName) {
+                        case "TONE":
+                            destinationMap = MapData.TONE;
+                            break;
+                        case "ICHIDAI":
+                            destinationMap = MapData.ICHIDAI;
+                            break;
+                        default:
+                            throw new IllegalArgumentException("Invalid destination map name");
+                    }
+
+                    mapTeleports[i].setDestinationMap(destinationMap);
+                    mapTeleports[i].setDestinationTeleport(destinationMap.getMapTeleports()[teleportIndex]);
+
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                try {
+                    if (bufferedReader != null) {
+                        bufferedReader.close();
+                    }
+                    if (inputStream != null) {
+                        inputStream.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         loadAssetThread.start();
         loadColliderThread.start();
+        loadTeleportThread.start();
         try {
             loadAssetThread.join();
             loadColliderThread.join();
+            loadTeleportThread.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -191,6 +239,13 @@ public class MapLayer extends GameLayer {
                 }
             }
         }
+
+        for (MapTeleport mapTeleport : mapData.getMapTeleports()) {
+            int positionX = mapTeleport.getTeleportPosition().x - camera.getPosition().x;
+            int positionY = mapTeleport.getTeleportPosition().y - camera.getPosition().y;
+            mapTeleport.draw(g2d, new Point(positionX, positionY));
+        }
+
     }
 
     @Override

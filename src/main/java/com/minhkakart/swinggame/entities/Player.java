@@ -4,6 +4,7 @@ import com.minhkakart.swinggame.enums.*;
 import com.minhkakart.swinggame.interfaces.Drawable;
 import com.minhkakart.swinggame.model.GameCamera;
 import com.minhkakart.swinggame.model.ImagePart;
+import com.minhkakart.swinggame.model.MapTeleport;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -34,9 +35,12 @@ public class Player implements Drawable {
 
     private Thread moveRightThread = null;
     private Thread moveLeftThread = null;
+    private Thread jumpThread = null;
+    private Thread fallThread = null;
 
     private int animationIndex = 0;
     private boolean isAnimating = false;
+    boolean stopAll = false;
     private JumpAnimationStage jumpAnimationStage = JumpAnimationStage.ONE;
 
     private final Stack<PlayerState> stateStack = new Stack<>();
@@ -151,15 +155,19 @@ public class Player implements Drawable {
         playAnimation();
 
         moveLeftThread = new Thread(() -> {
-            while (state == PlayerState.RUNNING) {
+            while (state == PlayerState.RUNNING && !stopAll) {
                 int playerPosRow = position.y / 24;
                 int playerPosCol = position.x / 24;
                 int mapCollider;
-                int moveX = -2;
+                int moveX = -1;
                 int moveY = 0;
                 if (direction == Direction.LEFT) {
                     int colliderCol = Math.max(playerPosCol - 1, 0);
-                    mapCollider = camera.getMapLayer().getMapColliders()[playerPosRow][colliderCol];
+                    try {
+                        mapCollider = camera.getMapLayer().getMapColliders()[playerPosRow][colliderCol];
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        mapCollider = MapCollider.NONE.getValue();
+                    }
                     if (mapCollider == MapCollider.LEFT.getValue() || mapCollider == MapCollider.UP_LEFT.getValue() || mapCollider == MapCollider.DOWN_LEFT.getValue() || mapCollider == MapCollider.All.getValue()) {
                         if (position.x + moveX < MapAssetPart.PART_WIDTH * playerPosCol + PLAYER_DRAW_AREA_WIDTH / 3) {
                             moveX = 0;
@@ -171,7 +179,7 @@ public class Player implements Drawable {
                 fall();
 
                 try {
-                    Thread.sleep(15);
+                    Thread.sleep(5);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -202,15 +210,19 @@ public class Player implements Drawable {
         playAnimation();
 
         moveRightThread = new Thread(() -> {
-            while (state == PlayerState.RUNNING) {
+            while (state == PlayerState.RUNNING && !stopAll) {
                 int playerPosRow = position.y / 24;
                 int playerPosCol = position.x / 24;
                 int mapCollider;
-                int moveX = 2;
+                int moveX = 1;
                 int moveY = 0;
                 if (direction == Direction.RIGHT) {
                     int colliderCol = Math.min(playerPosCol + 1, camera.getMapLayer().getMapName().getMapCol() - 1);
-                    mapCollider = camera.getMapLayer().getMapColliders()[playerPosRow][colliderCol];
+                    try {
+                        mapCollider = camera.getMapLayer().getMapColliders()[playerPosRow][colliderCol];
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        mapCollider = MapCollider.NONE.getValue();
+                    }
                     if (mapCollider == MapCollider.RIGHT.getValue() || mapCollider == MapCollider.UP_RIGHT.getValue() || mapCollider == MapCollider.DOWN_RIGHT.getValue() || mapCollider == MapCollider.All.getValue()) {
                         if (position.x + moveX > MapAssetPart.PART_WIDTH * (playerPosCol + 1) - PLAYER_DRAW_AREA_WIDTH / 3) {
                             moveX = 0;
@@ -222,7 +234,7 @@ public class Player implements Drawable {
                 fall();
 
                 try {
-                    Thread.sleep(15);
+                    Thread.sleep(5);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -235,6 +247,10 @@ public class Player implements Drawable {
     }
 
     public void jump() {
+        if (stopAll) {
+            return;
+        }
+
         PlayerState currentState = stateStack.peek();
         if (currentState == PlayerState.JUMPING || currentState == PlayerState.FALLING) {
             return;
@@ -244,9 +260,13 @@ public class Player implements Drawable {
         playJumpAnimation();
 
         // Total time for jump: 644ms
-        new Thread(() -> {
+        jumpThread = new Thread(() -> {
             int sleepTime = 6;
             for (int i = 0; i <= 38; i++) {
+                if (stopAll) {
+                    break;
+                }
+
                 int moveX = 0;
                 int moveY = -2;
 
@@ -274,7 +294,7 @@ public class Player implements Drawable {
                 } else if (i >= 20) {
                     sleepTime = 12;
                 }
-                if (i == 38){
+                if (i == 38) {
                     sleepTime += 204;
                 }
                 try {
@@ -286,7 +306,8 @@ public class Player implements Drawable {
             stateStack.pop();
             fall();
 
-        }).start();
+        });
+        jumpThread.start();
     }
 
     public void fall() {
@@ -309,10 +330,10 @@ public class Player implements Drawable {
         }
         stateStack.push(PlayerState.FALLING);
 
-        new Thread(() -> {
+        fallThread = new Thread(() -> {
             int sleepTime = 30;
             int count = 0;
-            while (true) {
+            while (!stopAll) {
                 int moveX = 0;
                 int moveY = 2;
                 int playerPosRow = position.y / 24;
@@ -350,10 +371,34 @@ public class Player implements Drawable {
             }
             stateStack.pop();
 
-        }).start();
+        });
+        fallThread.start();
 
     }
 
+    private void checkTeleport() {
+        Point playerPos = getPosition();
+        MapTeleport[] mapTeleports = camera.getMapLayer().getMapName().getMapTeleports();
+        for (MapTeleport teleport : mapTeleports) {
+            if ( playerPos.x > teleport.getTeleportPosition().x - 10 && playerPos.x < teleport.getTeleportPosition().x + 10 && (Math.abs(playerPos.y - teleport.getTeleportPosition().y) < 32)) {
+                synchronized (this) {
+                    stopAll = true;
+                }
+                stopAnimation();
+                setState(PlayerState.STANDING);
+                camera.getMapLayer().loadMap(teleport.getDestinationMap());
+                Point teleportPos = teleport.getDestinationTeleport().getPlayerPosition();
+                position.setLocation(teleportPos);
+
+                boundLeftCorner.setLocation(position.x - PLAYER_DRAW_AREA_WIDTH / 2, position.y - PLAYER_DRAW_AREA_HEIGHT + 2);
+                camera.setPosition(position);
+                synchronized (this) {
+                    stopAll = false;
+                }
+                System.out.println("Teleporting to " + teleport.getDestinationMap() + " at " + teleport.getDestinationTeleport().getTeleportPosition());
+            }
+        }
+    }
 
     private void moving(int dx, int dy) {
         synchronized (moveLock) {
@@ -361,6 +406,8 @@ public class Player implements Drawable {
             boundLeftCorner.translate(dx, dy);
             camera.setPosition(position);
         }
+        checkTeleport();
+        System.out.println("Player position: " + position);
     }
 
     public PlayerState getState() {
@@ -386,6 +433,10 @@ public class Player implements Drawable {
     @Override
     public void draw(Graphics2D g2d) {
         if (camera == null) return;
+        if (stateStack.isEmpty()){
+            stateStack.push(PlayerState.STANDING);
+            return;
+        }
         boolean isFlipped = direction == Direction.LEFT;
 
         if (stateStack.peek() == PlayerState.FALLING) {
@@ -406,10 +457,10 @@ public class Player implements Drawable {
         drawState(g2d, isFlipped, head, leg, body);
     }
 
-    private void drawState(Graphics2D g2d, boolean isFlipped, ImagePart headFall, ImagePart legFall, ImagePart bodyFall) {
-        headFall.draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
-        legFall.draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
-        bodyFall.draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
+    private void drawState(Graphics2D g2d, boolean isFlipped, ImagePart head, ImagePart leg, ImagePart body) {
+        head.draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
+        leg.draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
+        body.draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
     }
 
     @Override

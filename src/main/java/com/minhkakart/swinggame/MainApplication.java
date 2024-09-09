@@ -1,8 +1,10 @@
 package com.minhkakart.swinggame;
 
+import com.minhkakart.swinggame.enums.BackgroundPlace;
 import com.minhkakart.swinggame.enums.GameLayerDepth;
-import com.minhkakart.swinggame.enums.MapName;
+import com.minhkakart.swinggame.enums.MapData;
 import com.minhkakart.swinggame.model.GameCamera;
+import com.minhkakart.swinggame.panels.LogInPanel;
 import com.minhkakart.swinggame.ui.layer.BackgroundLayer;
 import com.minhkakart.swinggame.ui.layer.MapLayer;
 import com.minhkakart.swinggame.ui.layer.PlayerLayer;
@@ -41,7 +43,7 @@ public class MainApplication extends JFrame {
     }
 
     private static GamePanel getGamePanel() {
-        MapLayer mapLayer = new MapLayer(MapName.ICHIDAI, GameLayerDepth.MAP);
+        MapLayer mapLayer = new MapLayer(MapData.TONE, GameLayerDepth.MAP);
         BackgroundLayer backgroundLayer = new BackgroundLayer(GameLayerDepth.BACKGROUND);
         PlayerLayer playerLayer = new PlayerLayer(GameLayerDepth.PLAYER);
         GameCamera camera = new GameCamera(playerLayer, mapLayer);
@@ -61,6 +63,18 @@ public class MainApplication extends JFrame {
 
         gamePanel.addGameInputListener(playerLayer.getInputListener());
         gamePanel.addGameInputListener(mapLayer.getInputListener());
+
+        playerLayer.getPlayer().fall();
+
+        LogInPanel logInPanel = new LogInPanel();
+        logInPanel.getChangeBackground().addActionListener(e -> {
+            BackgroundPlace[] bgPlaces = BackgroundPlace.values();
+            int index = (int) (Math.random() * bgPlaces.length);
+            backgroundLayer.setBackGround(bgPlaces[index]);
+            gamePanel.setBackground(backgroundLayer.getBackground().getBackgroundPlace().getColor());
+        });
+
+//        gamePanel.add(logInPanel);
 
         return gamePanel;
     }

@@ -36,8 +36,9 @@ public class GamePanel extends JPanel implements KeyListener, MouseListener, Mou
     }
 
     @Override
-    public void paint(Graphics g) {
-        super.paint(g);
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
         Graphics2D g2d = (Graphics2D) g;
         for (GameLayer gameLayer : gameLayers) {
             gameLayer.draw(g2d);
