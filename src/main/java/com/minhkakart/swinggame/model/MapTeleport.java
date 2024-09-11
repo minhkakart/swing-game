@@ -11,10 +11,12 @@ public class MapTeleport implements Drawable {
     private final Point teleportPosition;
     private final Point playerPosition;
     private final Direction direction;
+    private final Rectangle gate;
 
     private MapData mapOwner;
     private MapData destinationMap;
     private MapTeleport destinationTeleport;
+
 
     private static int offset = 1;
     private static final Timer timer = new Timer(200, e -> setOffset(getOffset() * -1));
@@ -23,11 +25,11 @@ public class MapTeleport implements Drawable {
         timer.start();
     }
 
-    public MapTeleport(Point teleportPosition, Point playerPosition, Direction direction) {
+    public MapTeleport(Point teleportPosition, Point playerPosition, Direction direction, Rectangle gate) {
         this.teleportPosition = teleportPosition;
         this.playerPosition = playerPosition;
         this.direction = direction;
-
+        this.gate = gate;
     }
 
     public MapData getMapOwner() {
@@ -74,18 +76,12 @@ public class MapTeleport implements Drawable {
         return playerPosition;
     }
 
-
-    @Override
-    public void draw(Graphics2D g2d) {
+    public Rectangle getGate() {
+        return gate;
     }
 
     @Override
-    public void draw(Graphics2D g2d, boolean isFlipped) {
-
-    }
-
-    @Override
-    public void draw(Graphics2D g2d, Point position) {
+    public void draw(Graphics2D g2d, Point position, boolean isFlipped) {
         switch (direction) {
             case UP:
             case DOWN:
@@ -100,8 +96,4 @@ public class MapTeleport implements Drawable {
         MapArrow.draw(g2d, position, direction);
     }
 
-    @Override
-    public void draw(Graphics2D g2d, Point position, boolean isFlipped) {
-
-    }
 }

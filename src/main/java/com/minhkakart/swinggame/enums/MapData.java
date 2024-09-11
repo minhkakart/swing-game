@@ -6,13 +6,13 @@ import java.awt.*;
 
 public enum MapData {
     TONE("tone.txt", 23, 120, 2, BackgroundPlace.COUNTRY, 2, new MapTeleport[]{
-            new MapTeleport(new Point(36, 235), new Point(57, 261), Direction.LEFT),
-            new MapTeleport(new Point(2810, 122), new Point(2817, 167), Direction.UP),
+            new MapTeleport(new Point(36, 235), new Point(57, 261), Direction.LEFT, new Rectangle(24, 216, 10, 48)),
+            new MapTeleport(new Point(2810, 122), new Point(2817, 165), Direction.UP, new Rectangle(2808, 96, 24, 24)),
     }),
     ICHIDAI("ichidai.txt", 89, 30, 2, BackgroundPlace.DESERT, 3, new MapTeleport[]{
-            new MapTeleport(new Point(680, 213), new Point(661, 239), Direction.RIGHT),
-            new MapTeleport(new Point(680, 1937), new Point(661, 1965), Direction.RIGHT),
-            new MapTeleport(new Point(66, 2010), new Point(91, 1965), Direction.DOWN),
+            new MapTeleport(new Point(680, 213), new Point(661, 239), Direction.RIGHT, new Rectangle(685, 192, 20, 48)),
+            new MapTeleport(new Point(680, 1937), new Point(661, 1965), Direction.RIGHT, new Rectangle(685, 1920, 20, 48)),
+            new MapTeleport(new Point(66, 2010), new Point(91, 1965), Direction.DOWN, new Rectangle(48, 2010, 24, 20)),
     }),;
 
     private final String mapName;

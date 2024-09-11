@@ -18,6 +18,12 @@ public class MainApplication extends JFrame {
     public static final int WIDTH = 600;
     public static final int HEIGHT = 320;
 
+    private static final MapLayer mapLayer = new MapLayer(MapData.TONE, GameLayerDepth.MAP);
+    private static final BackgroundLayer backgroundLayer = new BackgroundLayer(GameLayerDepth.BACKGROUND);
+    private static final PlayerLayer playerLayer = new PlayerLayer(GameLayerDepth.PLAYER);
+    private static final GameCamera camera = new GameCamera(playerLayer, mapLayer);
+    private static final GamePanel gamePanel = new GamePanel();
+
     public MainApplication() {
         setTitle("Swing Game");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -42,18 +48,18 @@ public class MainApplication extends JFrame {
 
     }
 
+    public static void changeBackground(BackgroundPlace backgroundPlace) {
+        backgroundLayer.setBackGround(backgroundPlace);
+        gamePanel.setBackground(backgroundPlace.getColor());
+    }
+
     private static GamePanel getGamePanel() {
-        MapLayer mapLayer = new MapLayer(MapData.TONE, GameLayerDepth.MAP);
-        BackgroundLayer backgroundLayer = new BackgroundLayer(GameLayerDepth.BACKGROUND);
-        PlayerLayer playerLayer = new PlayerLayer(GameLayerDepth.PLAYER);
-        GameCamera camera = new GameCamera(playerLayer, mapLayer);
 
         backgroundLayer.setBackGround(mapLayer.getMapName().getBackgroundPlace());
 
         playerLayer.getPlayer().setCamera(camera);
         mapLayer.setCamera(camera);
 
-        GamePanel gamePanel = new GamePanel();
         gamePanel.setBounds(0, 0, WIDTH, HEIGHT);
         gamePanel.setBackground(backgroundLayer.getBackground().getBackgroundPlace().getColor());
 

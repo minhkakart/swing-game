@@ -29,23 +29,8 @@ public class BackgroundLayer extends GameLayer {
     }
 
     @Override
-    public void draw(Graphics2D g2d) {
-        background.draw(g2d);
-    }
-
-    @Override
-    public void draw(Graphics2D g2d, boolean isFlipped) {
-
-    }
-
-    @Override
-    public void draw(Graphics2D g2d, Point position) {
-
-    }
-
-    @Override
     public void draw(Graphics2D g2d, Point position, boolean isFlipped) {
-
+        background.draw(g2d, position, isFlipped);
     }
 
 }

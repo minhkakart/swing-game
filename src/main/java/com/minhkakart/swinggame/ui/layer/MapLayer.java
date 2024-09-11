@@ -199,7 +199,7 @@ public class MapLayer extends GameLayer {
     }
 
     @Override
-    public void draw(Graphics2D g2d) {
+    public void draw(Graphics2D g2d, Point position, boolean isFlipped) {
         if (mapAssets == null) {
             return;
         }
@@ -234,23 +234,8 @@ public class MapLayer extends GameLayer {
         for (MapTeleport mapTeleport : mapData.getMapTeleports()) {
             int positionX = mapTeleport.getTeleportPosition().x - camera.getPosition().x;
             int positionY = mapTeleport.getTeleportPosition().y - camera.getPosition().y;
-            mapTeleport.draw(g2d, new Point(positionX, positionY));
+            mapTeleport.draw(g2d, new Point(positionX, positionY), isFlipped);
         }
-
-    }
-
-    @Override
-    public void draw(Graphics2D g2d, boolean isFlipped) {
-
-    }
-
-    @Override
-    public void draw(Graphics2D g2d, Point position) {
-
-    }
-
-    @Override
-    public void draw(Graphics2D g2d, Point position, boolean isFlipped) {
 
     }
 

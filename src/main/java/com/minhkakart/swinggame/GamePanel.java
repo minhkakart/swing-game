@@ -41,7 +41,7 @@ public class GamePanel extends JPanel implements KeyListener, MouseListener, Mou
 
         Graphics2D g2d = (Graphics2D) g;
         for (GameLayer gameLayer : gameLayers) {
-            gameLayer.draw(g2d);
+            gameLayer.draw(g2d, new Point(), false);
         }
     }
 

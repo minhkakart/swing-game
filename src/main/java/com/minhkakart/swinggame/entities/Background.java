@@ -3,13 +3,14 @@ package com.minhkakart.swinggame.entities;
 import com.minhkakart.swinggame.MainApplication;
 import com.minhkakart.swinggame.enums.BackgroundPlace;
 import com.minhkakart.swinggame.enums.CloudImage;
+import com.minhkakart.swinggame.interfaces.Drawable;
 import com.minhkakart.swinggame.manager.ResourceManager;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class Background {
+public class Background implements Drawable {
 
     // Higher level backgrounds are drawn later
     private DrawImage bgLv1;
@@ -70,16 +71,17 @@ public class Background {
         });
     }
 
-    public void draw(Graphics2D g) {
-        reDrawNum(g, bgLv1);
-        reDrawNum(g, bgLv2);
-        reDrawNum(g, bgLv3);
-        reDrawNum(g, bgLv4);
+    @Override
+    public void draw(Graphics2D g2d, Point position, boolean isFlipped) {
+        reDrawNum(g2d, bgLv1);
+        reDrawNum(g2d, bgLv2);
+        reDrawNum(g2d, bgLv3);
+        reDrawNum(g2d, bgLv4);
 
         if (backgroundPlace.getCloudImage() != CloudImage.NONE) {
             List<Point> cloudPoints = backgroundPlace.getClouds();
             for (Point point : cloudPoints) {
-                g.drawImage(backgroundPlace.getCloudImage().getDrawImage(), point.x, point.y, null);
+                g2d.drawImage(backgroundPlace.getCloudImage().getDrawImage(), point.x, point.y, null);
             }
         }
     }
@@ -189,4 +191,5 @@ public class Background {
     public void setBackgroundPlace(BackgroundPlace backgroundPlace) {
         this.backgroundPlace = backgroundPlace;
     }
+
 }

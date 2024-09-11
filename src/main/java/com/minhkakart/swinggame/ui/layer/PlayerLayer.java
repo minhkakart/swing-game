@@ -45,23 +45,8 @@ public class PlayerLayer extends GameLayer {
     }
 
     @Override
-    public void draw(Graphics2D g2d) {
-        player.draw(g2d);
-    }
-
-    @Override
-    public void draw(Graphics2D g2d, boolean isFlipped) {
-
-    }
-
-    @Override
-    public void draw(Graphics2D g2d, Point position) {
-
-    }
-
-    @Override
     public void draw(Graphics2D g2d, Point position, boolean isFlipped) {
-
+        player.draw(g2d, position, isFlipped);
     }
 
     private final GameInputListener inputListener = new GameInputListener(1) {

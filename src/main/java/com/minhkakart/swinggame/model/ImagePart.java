@@ -46,22 +46,6 @@ public class ImagePart implements Drawable {
     }
 
     @Override
-    public void draw(Graphics2D g2d) {
-
-    }
-
-    @Override
-    public void draw(Graphics2D g2d, boolean isFlipped) {
-
-    }
-
-    @Override
-    public void draw(Graphics2D g2d, Point position) {
-
-
-    }
-
-    @Override
     public void draw(Graphics2D g2d, Point position, boolean isFlipped) {
         int source = playerPart.getSource();
         Image image = getSourcedImage(source);

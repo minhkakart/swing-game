@@ -1,5 +1,6 @@
 package com.minhkakart.swinggame.entities;
 
+import com.minhkakart.swinggame.MainApplication;
 import com.minhkakart.swinggame.enums.*;
 import com.minhkakart.swinggame.interfaces.Drawable;
 import com.minhkakart.swinggame.manager.AnimationManager;
@@ -11,7 +12,7 @@ import com.minhkakart.swinggame.model.MapTeleport;
 import java.awt.*;
 import java.util.List;
 
-@SuppressWarnings({"CallToPrintStackTrace", "BusyWait", "unused"})
+@SuppressWarnings({"CallToPrintStackTrace", "BusyWait"})
 public class Player implements Drawable {
     public static final int PLAYER_DRAW_AREA_WIDTH = 29;
     public static final int PLAYER_DRAW_AREA_HEIGHT = 36;
@@ -34,7 +35,7 @@ public class Player implements Drawable {
 
 
     public Player() {
-        this.position = new Point(240, 215);
+        this.position = new Point(57, 261);
         this.stateManager = new PlayerStateManager();
         this.animationManager = new AnimationManager(stateManager);
         this.boundLeftCorner = ((Point) position.clone());
@@ -279,15 +280,15 @@ public class Player implements Drawable {
 
     }
 
-    private void checkTeleport(int dx, int dy) {
+    private void checkTeleport() {
         Point playerPos = getPosition();
         MapTeleport[] mapTeleports = camera.getMapLayer().getMapName().getMapTeleports();
         for (MapTeleport teleport : mapTeleports) {
-            if (playerPos.x + dx > teleport.getTeleportPosition().x - 10 && playerPos.x + dx < teleport.getTeleportPosition().x + 10 && (Math.abs(playerPos.y + dy - teleport.getTeleportPosition().y) < 32)) {
-
+            if (teleport.getGate().contains(playerPos)) {
                 camera.getMapLayer().loadMap(teleport.getDestinationMap());
                 Point teleportPos = teleport.getDestinationTeleport().getPlayerPosition();
                 position.setLocation(teleportPos);
+                MainApplication.changeBackground(teleport.getDestinationMap().getBackgroundPlace());
 
                 boundLeftCorner.setLocation(position.x - PLAYER_DRAW_AREA_WIDTH / 2, position.y - PLAYER_DRAW_AREA_HEIGHT + 2);
                 camera.setPosition(position);
@@ -300,13 +301,13 @@ public class Player implements Drawable {
         if (this.stateManager.getCurrentState() == PlayerState.DEAD) {
             return;
         }
-        checkTeleport(dx, dy);
         synchronized (moveLock) {
             position.translate(dx, dy);
             boundLeftCorner.translate(dx, dy);
             camera.setPosition(position);
         }
-        System.out.println("Player position: " + position + " State: " + stateManager.getCurrentState());
+        checkTeleport();
+//        System.out.println("Player position: " + position + " State: " + stateManager.getCurrentState());
     }
 
     public void setCamera(GameCamera camera) {
@@ -317,49 +318,20 @@ public class Player implements Drawable {
         return position;
     }
 
-    public void setDirection(Direction direction) {
-        this.direction = direction;
-    }
-
     public void removeState(PlayerState playerState) {
         stateManager.remove(playerState);
         animationManager.notifyPlayerStateChange();
     }
 
     @Override
-    public void draw(Graphics2D g2d) {
+    public void draw(Graphics2D g2d, Point position, boolean isFlipped) {
         if (camera == null) return;
 
-        boolean isFlipped = direction == Direction.LEFT;
+        boolean flipped = direction == Direction.LEFT;
 
         List<PlayerPart> parts = animationManager.getListPart();
         for (PlayerPart part : parts) {
-            new ImagePart(part).draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
+            new ImagePart(part).draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), flipped);
         }
-    }
-
-    public PlayerStateManager getStateManager() {
-        return stateManager;
-    }
-
-    private void drawState(Graphics2D g2d, boolean isFlipped, ImagePart head, ImagePart leg, ImagePart body) {
-        head.draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
-        leg.draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
-        body.draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
-    }
-
-    @Override
-    public void draw(Graphics2D g2d, boolean isFlipped) {
-
-    }
-
-    @Override
-    public void draw(Graphics2D g2d, Point position) {
-
-    }
-
-    @Override
-    public void draw(Graphics2D g2d, Point position, boolean isFlipped) {
-
     }
 }

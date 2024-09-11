@@ -43,22 +43,8 @@ public class DrawImage implements Drawable {
     }
 
     @Override
-    public void draw(Graphics2D g2d) {
+    public void draw(Graphics2D g2d, Point position, boolean isFlipped) {
         g2d.drawImage(image.getImage(), position.x, position.y, null);
     }
 
-    @Override
-    public void draw(Graphics2D g2d, boolean isFlipped) {
-
-    }
-
-    @Override
-    public void draw(Graphics2D g2d, Point position) {
-
-    }
-
-    @Override
-    public void draw(Graphics2D g2d, Point position, boolean isFlipped) {
-
-    }
 }
