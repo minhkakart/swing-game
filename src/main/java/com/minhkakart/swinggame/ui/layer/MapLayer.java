@@ -38,10 +38,6 @@ public class MapLayer extends GameLayer {
         loadMap(mapData);
     }
 
-    public GameCamera getCamera() {
-        return camera;
-    }
-
     public int[][] getMapColliders() {
         return mapColliders;
     }
@@ -52,11 +48,6 @@ public class MapLayer extends GameLayer {
 
     public MapData getMapName() {
         return mapData;
-    }
-
-    public synchronized void translate(int x, int y) {
-        translatePoint.x += x;
-        translatePoint.y += y;
     }
 
     @SuppressWarnings("CallToPrintStackTrace")

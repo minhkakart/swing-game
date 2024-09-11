@@ -1,38 +1,22 @@
 package com.minhkakart.swinggame.enums;
 
 public enum PlayerState {
-    STANDING(1, 0),
-    RUNNING(5, 50),
-    JUMPING(5, 200),
-    FALLING(1, 0),
-    BEING_HIT(1, 0),
-    DEAD(1, 0);
+    STANDING(0),
+    RUNNING(1),
+    JUMPING(2),
+    FALLING(2),
+    ATTACKING(2),
+    BEING_HIT(3),
+    DEAD(100);
 
-    /**
-     * The number of animation images
-     */
-    private final int ANIMATION_COUNT;
+    private final int priority;
 
-    /**
-     * The speed of animation in milliseconds
-     */
-    private final int ANIMATION_SPEED;
-
-    PlayerState(int animationCount, int animationSpeed) {
-        ANIMATION_COUNT = animationCount;
-        ANIMATION_SPEED = animationSpeed;
+    PlayerState(int priority) {
+        this.priority = priority;
     }
 
-    PlayerState() {
-        ANIMATION_COUNT = 1;
-        ANIMATION_SPEED = 1;
+    public int getPriority() {
+        return priority;
     }
 
-    public int getAnimationCount() {
-        return ANIMATION_COUNT;
-    }
-
-    public int getAnimationSpeed() {
-        return ANIMATION_SPEED;
-    }
 }

@@ -1,37 +1,27 @@
-import javax.swing.*;
-import java.awt.*;
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class Test {
     public static void main(String[] args) {
-        JFrame frame = new JFrame();
-        MyPanel panel = new MyPanel();
-        panel.setLocation(0, 0);
-        frame.add(panel);
-        frame.pack();
+        LinkedList<Integer> list = new LinkedList<>();
+        list.add(2);
+        list.add(3);
+        list.add(6);
+        list.add(4);
+        list.add(1);
+        list.add(5);
+        list.add(8);
+        list.add(7);
+        list.add(10);
+        list.add(9);
 
+        list.sort((o1, o2) -> o2 - o1);
 
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
-        frame.setLocationRelativeTo(null);
-
-    }
-
-
-    private static class MyPanel extends JPanel {
-        public MyPanel() {
-            setPreferredSize(new Dimension(800, 600));
+        for (Integer integer : list) {
+            System.out.println(integer);
         }
 
-        @Override
-        public void paint(Graphics g) {
-            super.paint(g);
-
-            Graphics2D g2d = (Graphics2D) g;
-            ImageIcon imageIcon = new ImageIcon("src/main/resources/images/map-assets/1.png");
-            Image image = imageIcon.getImage();
-            g2d.drawImage(image, 0, 0, 24, 24, 0, 0, 24, 24, this);
-
-        }
     }
 
 }

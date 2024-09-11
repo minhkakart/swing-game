@@ -2,138 +2,48 @@ package com.minhkakart.swinggame.entities;
 
 import com.minhkakart.swinggame.enums.*;
 import com.minhkakart.swinggame.interfaces.Drawable;
+import com.minhkakart.swinggame.manager.AnimationManager;
+import com.minhkakart.swinggame.manager.PlayerStateManager;
 import com.minhkakart.swinggame.model.GameCamera;
 import com.minhkakart.swinggame.model.ImagePart;
 import com.minhkakart.swinggame.model.MapTeleport;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Stack;
+import java.util.List;
 
 @SuppressWarnings({"CallToPrintStackTrace", "BusyWait", "unused"})
 public class Player implements Drawable {
     public static final int PLAYER_DRAW_AREA_WIDTH = 29;
     public static final int PLAYER_DRAW_AREA_HEIGHT = 36;
 
+    private final Object moveLock = new Object();
+    private final Object directionLock = new Object();
+
+    private final PlayerStateManager stateManager;
+    private final AnimationManager animationManager;
+
     private final Point position;
     private final Point boundLeftCorner;
     private Direction direction;
-    private PlayerState state;
-    private final ArrayList<ImagePart> heads;
-    private final ArrayList<ImagePart> bodies;
-    private final ArrayList<ImagePart> legs;
-
-    private final ImagePart headFall = new ImagePart(PlayerPart.HEAD_FALL);
-    private final ImagePart bodyFall = new ImagePart(PlayerPart.BODY_FALL);
-    private final ImagePart legFall = new ImagePart(PlayerPart.LEG_FALL);
-
-    private final Object moveLock = new Object();
-    private final Object directionLock = new Object();
-    private final Object animationLock = new Object();
 
     private GameCamera camera;
 
     private Thread moveRightThread = null;
     private Thread moveLeftThread = null;
     private Thread jumpThread = null;
-    private Thread fallThread = null;
 
-    private int animationIndex = 0;
-    private boolean isAnimating = false;
-    boolean stopAll = false;
-    private JumpAnimationStage jumpAnimationStage = JumpAnimationStage.ONE;
-
-    private final Stack<PlayerState> stateStack = new Stack<>();
 
     public Player() {
         this.position = new Point(240, 215);
+        this.stateManager = new PlayerStateManager();
+        this.animationManager = new AnimationManager(stateManager);
         this.boundLeftCorner = ((Point) position.clone());
-        boundLeftCorner.translate(-(PLAYER_DRAW_AREA_WIDTH / 2), -PLAYER_DRAW_AREA_HEIGHT + 2);
+
+        this.boundLeftCorner.translate(-(PLAYER_DRAW_AREA_WIDTH / 2), -PLAYER_DRAW_AREA_HEIGHT + 2);
         this.direction = Direction.RIGHT;
-        this.state = PlayerState.STANDING;
-        stateStack.push(PlayerState.STANDING);
-        heads = new ArrayList<>();
-        bodies = new ArrayList<>();
-        legs = new ArrayList<>();
-
-        heads.add(new ImagePart(PlayerPart.HEAD_STAND));
-        heads.add(new ImagePart(PlayerPart.HEAD_RUN_1));
-        heads.add(new ImagePart(PlayerPart.HEAD_RUN_2));
-        heads.add(new ImagePart(PlayerPart.HEAD_RUN_3));
-        heads.add(new ImagePart(PlayerPart.HEAD_RUN_4));
-        heads.add(new ImagePart(PlayerPart.HEAD_RUN_5));
-
-        bodies.add(new ImagePart(PlayerPart.BODY_STAND));
-        bodies.add(new ImagePart(PlayerPart.BODY_RUN_1));
-        bodies.add(new ImagePart(PlayerPart.BODY_RUN_2));
-        bodies.add(new ImagePart(PlayerPart.BODY_RUN_3));
-        bodies.add(new ImagePart(PlayerPart.BODY_RUN_4));
-        bodies.add(new ImagePart(PlayerPart.BODY_RUN_5));
-
-        legs.add(new ImagePart(PlayerPart.LEG_STAND));
-        legs.add(new ImagePart(PlayerPart.LEG_RUN_1));
-        legs.add(new ImagePart(PlayerPart.LEG_RUN_2));
-        legs.add(new ImagePart(PlayerPart.LEG_RUN_3));
-        legs.add(new ImagePart(PlayerPart.LEG_RUN_4));
-        legs.add(new ImagePart(PlayerPart.LEG_RUN_5));
-    }
-
-    private synchronized boolean isAnimating() {
-        return isAnimating;
-    }
-
-    private synchronized void setAnimating(boolean animating) {
-        isAnimating = animating;
-    }
-
-    private void playAnimation() {
-        if (isAnimating()) {
-            return;
-        }
-        setAnimating(true);
-        new Thread(() -> {
-            while (isAnimating()) {
-                synchronized (animationLock) {
-                    animationIndex++;
-                    if (animationIndex == 6) {
-                        animationIndex = 1;
-                    }
-                }
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            synchronized (animationLock) {
-                animationIndex = 0;
-            }
-        }).start();
-    }
-
-    public void stopAnimation() {
-        setAnimating(false);
-    }
-
-    private synchronized void setJumpAnimationStage(JumpAnimationStage jumpAnimationStage) {
-        this.jumpAnimationStage = jumpAnimationStage;
-    }
-
-    private void playJumpAnimation() {
-        new Thread(() -> {
-            for (int i = 0; i < JumpAnimationStage.values().length; i++) {
-                if (stateStack.peek() != PlayerState.JUMPING) {
-                    break;
-                }
-                try {
-                    Thread.sleep(jumpAnimationStage.getDuration());
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                setJumpAnimationStage(JumpAnimationStage.values()[i]);
-            }
-            setJumpAnimationStage(JumpAnimationStage.ONE);
-        }).start();
+        this.stateManager.push(PlayerState.STANDING);
+        this.animationManager.notifyPlayerStateChange();
+        this.animationManager.start();
     }
 
     public synchronized void moveLeft() {
@@ -141,21 +51,19 @@ public class Player implements Drawable {
             return;
         }
 
-        if (state == PlayerState.RUNNING && direction == Direction.RIGHT) {
+        if (stateManager.contains(PlayerState.RUNNING)) {
             return;
         }
 
-        if (state != PlayerState.RUNNING) {
-            synchronized (directionLock) {
-                state = PlayerState.RUNNING;
-                direction = Direction.LEFT;
-            }
+        synchronized (directionLock) {
+            stateManager.push(PlayerState.RUNNING);
+            direction = Direction.LEFT;
         }
 
-        playAnimation();
+        animationManager.notifyPlayerStateChange();
 
         moveLeftThread = new Thread(() -> {
-            while (state == PlayerState.RUNNING && !stopAll) {
+            while (stateManager.contains(PlayerState.RUNNING)) {
                 int playerPosRow = position.y / 24;
                 int playerPosCol = position.x / 24;
                 int mapCollider;
@@ -196,21 +104,19 @@ public class Player implements Drawable {
             return;
         }
 
-        if (state == PlayerState.RUNNING && direction == Direction.LEFT) {
+        if (stateManager.contains(PlayerState.RUNNING)) {
             return;
         }
 
-        if (state != PlayerState.RUNNING) {
-            synchronized (directionLock) {
-                state = PlayerState.RUNNING;
-                direction = Direction.RIGHT;
-            }
+        synchronized (directionLock) {
+            stateManager.push(PlayerState.RUNNING);
+            direction = Direction.RIGHT;
         }
 
-        playAnimation();
+        animationManager.notifyPlayerStateChange();
 
         moveRightThread = new Thread(() -> {
-            while (state == PlayerState.RUNNING && !stopAll) {
+            while (stateManager.contains(PlayerState.RUNNING)) {
                 int playerPosRow = position.y / 24;
                 int playerPosCol = position.x / 24;
                 int mapCollider;
@@ -247,26 +153,18 @@ public class Player implements Drawable {
     }
 
     public void jump() {
-        if (stopAll) {
-            return;
-        }
-
-        PlayerState currentState = stateStack.peek();
+        PlayerState currentState = stateManager.getCurrentState();
         if (currentState == PlayerState.JUMPING || currentState == PlayerState.FALLING) {
             return;
         }
-        stateStack.push(PlayerState.JUMPING);
+        stateManager.push(PlayerState.JUMPING);
 
-        playJumpAnimation();
+        animationManager.notifyPlayerStateChange();
 
         // Total time for jump: 644ms
         jumpThread = new Thread(() -> {
             int sleepTime = 6;
             for (int i = 0; i <= 38; i++) {
-                if (stopAll) {
-                    break;
-                }
-
                 int moveX = 0;
                 int moveY = -2;
 
@@ -303,7 +201,9 @@ public class Player implements Drawable {
                     e.printStackTrace();
                 }
             }
-            stateStack.pop();
+            jumpThread = null;
+            stateManager.remove(PlayerState.JUMPING);
+            animationManager.notifyPlayerStateChange();
             fall();
 
         });
@@ -324,16 +224,18 @@ public class Player implements Drawable {
             }
         }
 
-        PlayerState currentState = stateStack.peek();
+        PlayerState currentState = stateManager.getCurrentState();
+
         if (currentState == PlayerState.JUMPING || currentState == PlayerState.FALLING) {
             return;
         }
-        stateStack.push(PlayerState.FALLING);
+        stateManager.push(PlayerState.FALLING);
+        animationManager.notifyPlayerStateChange();
 
-        fallThread = new Thread(() -> {
+        Thread fallThread = new Thread(() -> {
             int sleepTime = 30;
             int count = 0;
-            while (!stopAll) {
+            while (true) {
                 int moveX = 0;
                 int moveY = 2;
                 int playerPosRow = position.y / 24;
@@ -369,53 +271,42 @@ public class Player implements Drawable {
                     sleepTime = 5;
                 }
             }
-            stateStack.pop();
+            stateManager.remove(PlayerState.FALLING);
+            animationManager.notifyPlayerStateChange();
 
         });
         fallThread.start();
 
     }
 
-    private void checkTeleport() {
+    private void checkTeleport(int dx, int dy) {
         Point playerPos = getPosition();
         MapTeleport[] mapTeleports = camera.getMapLayer().getMapName().getMapTeleports();
         for (MapTeleport teleport : mapTeleports) {
-            if ( playerPos.x > teleport.getTeleportPosition().x - 10 && playerPos.x < teleport.getTeleportPosition().x + 10 && (Math.abs(playerPos.y - teleport.getTeleportPosition().y) < 32)) {
-                synchronized (this) {
-                    stopAll = true;
-                }
-                stopAnimation();
-                setState(PlayerState.STANDING);
+            if (playerPos.x + dx > teleport.getTeleportPosition().x - 10 && playerPos.x + dx < teleport.getTeleportPosition().x + 10 && (Math.abs(playerPos.y + dy - teleport.getTeleportPosition().y) < 32)) {
+
                 camera.getMapLayer().loadMap(teleport.getDestinationMap());
                 Point teleportPos = teleport.getDestinationTeleport().getPlayerPosition();
                 position.setLocation(teleportPos);
 
                 boundLeftCorner.setLocation(position.x - PLAYER_DRAW_AREA_WIDTH / 2, position.y - PLAYER_DRAW_AREA_HEIGHT + 2);
                 camera.setPosition(position);
-                synchronized (this) {
-                    stopAll = false;
-                }
                 System.out.println("Teleporting to " + teleport.getDestinationMap() + " at " + teleport.getDestinationTeleport().getTeleportPosition());
             }
         }
     }
 
     private void moving(int dx, int dy) {
+        if (this.stateManager.getCurrentState() == PlayerState.DEAD) {
+            return;
+        }
+        checkTeleport(dx, dy);
         synchronized (moveLock) {
             position.translate(dx, dy);
             boundLeftCorner.translate(dx, dy);
             camera.setPosition(position);
         }
-        checkTeleport();
-        System.out.println("Player position: " + position);
-    }
-
-    public PlayerState getState() {
-        return state;
-    }
-
-    public synchronized void setState(PlayerState state) {
-        this.state = state;
+        System.out.println("Player position: " + position + " State: " + stateManager.getCurrentState());
     }
 
     public void setCamera(GameCamera camera) {
@@ -430,31 +321,25 @@ public class Player implements Drawable {
         this.direction = direction;
     }
 
+    public void removeState(PlayerState playerState) {
+        stateManager.remove(playerState);
+        animationManager.notifyPlayerStateChange();
+    }
+
     @Override
     public void draw(Graphics2D g2d) {
         if (camera == null) return;
-        if (stateStack.isEmpty()){
-            stateStack.push(PlayerState.STANDING);
-            return;
-        }
+
         boolean isFlipped = direction == Direction.LEFT;
 
-        if (stateStack.peek() == PlayerState.FALLING) {
-            drawState(g2d, isFlipped, headFall, legFall, bodyFall);
-            return;
+        List<PlayerPart> parts = animationManager.getListPart();
+        for (PlayerPart part : parts) {
+            new ImagePart(part).draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
         }
+    }
 
-        if (stateStack.peek() == PlayerState.JUMPING) {
-            for (PlayerPart part : jumpAnimationStage.getListPart()) {
-                new ImagePart(part).draw(g2d, new Point(boundLeftCorner.x - camera.getPosition().x, boundLeftCorner.y - camera.getPosition().y), isFlipped);
-            }
-            return;
-        }
-
-        ImagePart head = heads.get(animationIndex);
-        ImagePart body = bodies.get(animationIndex);
-        ImagePart leg = legs.get(animationIndex);
-        drawState(g2d, isFlipped, head, leg, body);
+    public PlayerStateManager getStateManager() {
+        return stateManager;
     }
 
     private void drawState(Graphics2D g2d, boolean isFlipped, ImagePart head, ImagePart leg, ImagePart body) {

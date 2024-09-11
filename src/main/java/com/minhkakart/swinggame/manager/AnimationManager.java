@@ -1,81 +1,134 @@
 package com.minhkakart.swinggame.manager;
 
-import com.minhkakart.swinggame.enums.Direction;
+import com.minhkakart.swinggame.enums.PlayerPart;
+import com.minhkakart.swinggame.enums.PlayerState;
+import com.minhkakart.swinggame.enums.animation.FallAnimationStage;
+import com.minhkakart.swinggame.enums.animation.JumpAnimationStage;
+import com.minhkakart.swinggame.enums.animation.RunAnimationStage;
+import com.minhkakart.swinggame.enums.animation.StandAnimationStage;
 
-import javax.swing.*;
-import java.awt.*;
+import java.util.List;
 
-public class AnimationManager {
-    private final ImageIcon moveImage;
+public class AnimationManager implements Runnable {
+    private final PlayerStateManager playerStateManager;
+    private final Thread animationThread;
+    private int currentStage;
+    private List<PlayerPart> listPart;
+    private boolean isNotified;
+    private PlayerState playerState;
 
-    private int imageIndex = 0;
-    private Direction direction = Direction.RIGHT;
+    private final Object lock = new Object();
 
-    private boolean isAnimating = false;
-
-    public AnimationManager() {
-        moveImage = new ImageIcon(ResourceManager.getImagePath("move.png"));
+    public AnimationManager(PlayerStateManager playerStateManager) {
+        this.playerStateManager = playerStateManager;
+        this.animationThread = new Thread(this);
+        this.currentStage = 0;
+        this.isNotified = false;
     }
 
-    public void playAnimation() {
-        if (isAnimating) {
-            return;
+    public void start() {
+        animationThread.start();
+    }
+
+    public void notifyPlayerStateChange() {
+        synchronized (lock) {
+            if (playerState == null || playerState != playerStateManager.getCurrentState()) {
+                playerState = playerStateManager.getCurrentState();
+                setCurrentStage(0);
+                changeNotified();
+            }
         }
+    }
 
-        new Thread(() -> {
-            setAnimating(true);
-            int imageIndex = 1;
-            while (isAnimating) {
-                setImageIndex(imageIndex);
-                if (imageIndex == 5) {
-                    imageIndex = 1;
-                } else {
-                    imageIndex++;
+    public List<PlayerPart> getListPart() {
+        synchronized (lock) {
+            return listPart;
+        }
+    }
+
+    private void setListPart(List<PlayerPart> listPart) {
+        synchronized (lock) {
+            this.listPart = listPart;
+        }
+    }
+
+    private void setCurrentStage(int currentStage) {
+        synchronized (lock) {
+            this.currentStage = currentStage;
+        }
+    }
+
+    public int getCurrentStage() {
+        synchronized (lock) {
+            return currentStage;
+        }
+    }
+
+    public boolean isNotified() {
+        synchronized (lock) {
+            return isNotified;
+        }
+    }
+
+    public void changeNotified() {
+        synchronized (lock) {
+            isNotified = !isNotified;
+        }
+    }
+
+    @SuppressWarnings({"BusyWait", "CallToPrintStackTrace", "InfiniteLoopStatement"})
+    @Override
+    public void run() {
+        boolean isNotified = isNotified();
+        while (true) {
+            PlayerState playerState = playerStateManager.getCurrentState();
+            int stageCount;
+            int duration;
+            synchronized (lock) {
+                switch (playerState) {
+                    case FALLING:
+                        setListPart(FallAnimationStage.values()[getCurrentStage()].getListPart());
+                        stageCount = FallAnimationStage.values().length;
+                        duration = FallAnimationStage.values()[getCurrentStage()].getDuration();
+                        break;
+                    case JUMPING:
+                        setListPart(JumpAnimationStage.values()[getCurrentStage()].getListPart());
+                        stageCount = JumpAnimationStage.values().length;
+                        duration = JumpAnimationStage.values()[getCurrentStage()].getDuration();
+                        break;
+                    case RUNNING:
+                        setListPart(RunAnimationStage.values()[getCurrentStage()].getListPart());
+                        stageCount = RunAnimationStage.values().length;
+                        duration = RunAnimationStage.values()[getCurrentStage()].getDuration();
+                        break;
+                    case STANDING:
+                    default:
+                        setListPart(StandAnimationStage.values()[getCurrentStage()].getListPart());
+                        stageCount = StandAnimationStage.values().length;
+                        duration = StandAnimationStage.values()[getCurrentStage()].getDuration();
+                        break;
                 }
+                setCurrentStage((getCurrentStage() + 1) % stageCount);
+            }
 
+            for (int i = 0; i < duration/10; i++) {
+                if (isNotified != isNotified()) {
+                    isNotified = isNotified();
+                    break;
+                }
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(10);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-        }).start();
-
-    }
-
-    public synchronized void stopAnimation() {
-        setImageIndex(0);
-        setAnimating(false);
-    }
-
-    public synchronized void setAnimating(boolean isAnimating) {
-        this.isAnimating = isAnimating;
-    }
-
-    private synchronized void setImageIndex(int imageIndex) {
-        this.imageIndex = imageIndex;
-    }
-
-    public synchronized void setDirection(Direction direction) {
-        this.direction = direction;
-    }
-
-    public void draw(Graphics2D g, Point position) {
-        int dx1 = (int) position.getX();
-        int dy1 = (int) position.getY();
-        int dx2 = (int) position.getX() + 50;
-        int dy2 = (int) position.getY() + moveImage.getIconHeight();
-        int sx1 = (imageIndex) * 50;
-        int sy1 = 0;
-        int sx2 = (imageIndex + 1) * 50;
-        int sy2 = moveImage.getIconHeight();
-
-        if (direction == Direction.LEFT) {
-            int dx1Temp = dx1;
-            dx1 = dx2;
-            dx2 = dx1Temp;
+            if ((duration/10) * 10 < duration) {
+                try {
+                    Thread.sleep(duration - (duration/10) * 10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
-
-        g.drawImage(moveImage.getImage(), dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, null);
     }
 }

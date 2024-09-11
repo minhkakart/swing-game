@@ -3,7 +3,9 @@ package com.minhkakart.swinggame.enums;
 import java.awt.*;
 
 public enum PlayerPart {
-    HEAD_STAND(new Point(29, 82), new Dimension(21, 19), new Point(5, 2), 0),
+    HEAD_STAND_0(new Point(29, 82), new Dimension(21, 19), new Point(5, 2), 0),
+    HEAD_STAND_1(new Point(29, 82), new Dimension(21, 19), new Point(5, 3), 0),
+
     HEAD_RUN_1(new Point(29, 101), new Dimension(21, 21), new Point(5, 1), 0),
     HEAD_RUN_2(new Point(29, 101), new Dimension(21, 21), new Point(5, 1), 0),
     HEAD_RUN_3(new Point(29, 101), new Dimension(21, 21), new Point(5, 2), 0),
@@ -16,7 +18,9 @@ public enum PlayerPart {
 
 //    HEAD_HIT(new Point(29,82), new Dimension(21,19), new Point(5,2), 0),
 
-    BODY_STAND(new Point(79, 150), new Dimension(21, 11), new Point(4, 19), 0),
+    BODY_STAND_0(new Point(79, 150), new Dimension(21, 11), new Point(4, 19), 0),
+    BODY_STAND_1(new Point(79, 150), new Dimension(21, 11), new Point(4, 20), 0),
+
     BODY_RUN_1(new Point(140, 156), new Dimension(16, 10), new Point(7, 19), 0),
     BODY_RUN_2(new Point(174, 106), new Dimension(19, 9), new Point(5, 18), 0),
     BODY_RUN_3(new Point(219, 126), new Dimension(15, 10), new Point(7, 19), 0),

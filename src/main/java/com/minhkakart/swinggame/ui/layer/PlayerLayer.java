@@ -95,8 +95,7 @@ public class PlayerLayer extends GameLayer {
             switch (e.getKeyCode()) {
                 case KeyEvent.VK_LEFT:
                 case KeyEvent.VK_RIGHT:
-                    player.stopAnimation();
-                    player.setState(PlayerState.STANDING);
+                    player.removeState(PlayerState.RUNNING);
                     break;
             }
         }
